@@ -3,7 +3,7 @@
 // prettier-ignore
 
 const form = document.querySelector('.form');
-
+const editForm = document.querySelector('.edit--form');
 const containerWorkouts = document.querySelector('.workouts');
 const inputType = document.querySelector('.form__input--type');
 const inputDistance = document.querySelector('.form__input--distance');
@@ -12,21 +12,39 @@ const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 const deleteAll = document.querySelector('.btn--delete');
 
+const editInputType = document.querySelector('.edit--form__input--type');
+const editInputDistance = document.querySelector(
+  '.edit--form__input--distance'
+);
+const editInputDuration = document.querySelector(
+  '.edit--form__input--duration'
+);
+const editInputCadence = document.querySelector('.edit--form__input--cadence');
+const editInputElevation = document.querySelector(
+  '.edit--form__input--elevation'
+);
+
 class App {
   #workouts = [];
   #workoutMarkers = [];
+  #workoutEdit;
+  #workoutEditIndex;
+  #currentWorkoutListItem;
   #map;
   #mapZoomLvl = 13;
   #mapEvent;
   editCoords = [];
+  editBtns;
 
   constructor() {
     // methods
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
+    editForm.addEventListener('submit', this._updateWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
     containerWorkouts.addEventListener('click', this.deleteWorkout.bind(this));
+    containerWorkouts.addEventListener('click', this._editWorkout.bind(this));
     deleteAll.addEventListener('click', this.reset);
   }
 
@@ -58,6 +76,7 @@ class App {
   }
 
   _showForm(mapEvt) {
+    if (!editForm.classList.contains('hidden')) return;
     form.classList.remove('hidden');
     inputDistance.focus();
     this.#mapEvent = mapEvt;
@@ -157,7 +176,9 @@ class App {
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
     <div class="workout__title">${
       workout.description
-    }<div class="workout__menu"><button class="del" data-id=${
+    }<div class="workout__menu"><img data-id="${
+      workout.id
+    }" class="edit--btn" src="pencil.png"> <button class="del" data-id=${
       workout.id
     }>x</button></div></div>
     <div class="workout__details">
@@ -262,6 +283,131 @@ class App {
       this._setLocalStorage();
       location.reload();
     }
+  }
+
+  _editWorkout(e) {
+    if (!editForm.classList.contains('hidden')) return;
+
+    const editBtn = e.target.closest('.edit--btn');
+    if (!editBtn) return;
+
+    this.editBtns = document.querySelectorAll('.workout__menu');
+    this.editBtns.forEach(el => el.classList.add('hidden'));
+
+    this.#currentWorkoutListItem = editBtn.closest('.workout');
+
+    this.#workoutEdit = this.#workouts.find(
+      workout => workout.id === editBtn.dataset.id
+    );
+
+    this.#workoutEditIndex = this.#workouts.findIndex(
+      workout => workout.id === editBtn.dataset.id
+    );
+
+    editForm.classList.remove('hidden');
+    this.#currentWorkoutListItem.insertAdjacentElement('beforebegin', editForm);
+    this.#currentWorkoutListItem.classList.add('hidden');
+
+    editInputDistance.value = +this.#workoutEdit.distance;
+    editInputDuration.value = +this.#workoutEdit.duration;
+
+    editInputType.addEventListener('change', this._toggleElevationFieldEdit);
+
+    if (this.#workoutEdit.type === 'running') {
+      editInputCadence.value = +this.#workoutEdit.cadence;
+    }
+
+    if (this.#workoutEdit.type === 'cycling') {
+      editInputElevation.value = +this.#workoutEdit.elevationGain;
+    }
+
+    // if (!editForm.classList.contains('hidden')) {
+    //   document.addEventListener('click', this.cancelEdit.bind(this));
+    // }
+  }
+
+  _toggleElevationFieldEdit() {
+    editInputElevation.parentElement.classList.toggle(
+      'edit--form__row--hidden'
+    );
+    editInputCadence.parentElement.classList.toggle('edit--form__row--hidden');
+  }
+
+  cancelEdit(e) {
+    if (!e.target.closest('.edit--form')) {
+      if (confirm('Unsaved changes will be lost. Proceed anyway?')) {
+        editForm.classList.add('hidden');
+        this.#currentWorkoutListItem.classList.remove('hidden');
+        document.removeEventListener('click', this.cancelEdit);
+      }
+    }
+  }
+
+  _updateWorkout(e) {
+    e.preventDefault();
+    const markerCoords = [
+      this.#workoutEdit.coords[0],
+      this.#workoutEdit.coords[1],
+    ];
+
+    // validators
+    const validInputs = (...inputs) =>
+      inputs.every(inp => Number.isFinite(inp));
+    const positiveInputs = (...inputs) => inputs.every(inp => inp > 0);
+
+    // get data from form
+    const type = editInputType.value;
+    const distance = +editInputDistance.value;
+    const duration = +editInputDuration.value;
+    const err = 'Inputs have to be positive numbers';
+    let workout;
+
+    // behaviour based on workout type
+    if (type === 'running') {
+      const cadence = +editInputCadence.value;
+
+      // data validation
+      if (
+        !validInputs(distance, duration, cadence) ||
+        !positiveInputs(distance, duration, cadence)
+      )
+        return alert(err);
+      // if (!Number.isFinite(duration)) return alert(err);
+
+      this.#workoutEdit = new Running(
+        distance,
+        duration,
+        markerCoords,
+        type,
+        cadence
+      );
+    }
+
+    if (type === 'cycling') {
+      const elevation = +editInputElevation.value;
+
+      // data validation
+      if (
+        !validInputs(distance, duration, elevation) ||
+        !positiveInputs(distance, duration)
+      )
+        return alert(err);
+
+      this.#workoutEdit = new Cycling(
+        distance,
+        duration,
+        markerCoords,
+        type,
+        elevation
+      );
+    }
+    editForm.classList.add('hidden');
+
+    this.editBtns.forEach(el => el.classList.remove('hidden'));
+    this.#workouts[this.#workoutEditIndex] = this.#workoutEdit;
+    this._renderWorkoutMarker(this.#workoutEdit);
+    this._renderWorkoutItem(this.#workoutEdit);
+    this._setLocalStorage();
   }
 }
 
