@@ -11,6 +11,8 @@ const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 const deleteAll = document.querySelector('.btn--delete');
+const showAll = document.querySelector('.btn--show');
+const btmMenu = document.querySelector('.btn--btns--hidden');
 
 const editInputType = document.querySelector('.edit--form__input--type');
 const editInputDistance = document.querySelector(
@@ -46,6 +48,7 @@ class App {
     containerWorkouts.addEventListener('click', this.deleteWorkout.bind(this));
     containerWorkouts.addEventListener('click', this._editWorkout.bind(this));
     deleteAll.addEventListener('click', this.reset);
+    showAll.addEventListener('click', this._showAll.bind(this));
   }
 
   _getPosition() {
@@ -149,7 +152,7 @@ class App {
     this._renderWorkoutItem(workout);
     this._hideForm();
     this._setLocalStorage();
-    this.showDeleteBtn();
+    this.showBtmMenu();
   }
 
   _renderWorkoutMarker(workout) {
@@ -171,7 +174,6 @@ class App {
       .openPopup();
 
     this.#workoutMarkers.push(marker);
-    console.log(this.#workoutMarkers);
   }
 
   _renderWorkoutItem(workout) {
@@ -256,7 +258,7 @@ class App {
     this.#workouts.forEach(workout => {
       this._renderWorkoutItem(workout);
       this._renderWorkoutMarker(workout);
-      this.showDeleteBtn();
+      this.showBtmMenu();
     });
   }
 
@@ -268,8 +270,8 @@ class App {
     }
   }
 
-  showDeleteBtn() {
-    deleteAll.classList.remove('btn--hidden');
+  showBtmMenu() {
+    btmMenu.classList.remove('btn--btns--hidden');
   }
 
   deleteWorkout(e) {
@@ -400,6 +402,13 @@ class App {
     this._renderWorkoutMarker(this.#workoutEdit);
     this._renderWorkoutItem(this.#workoutEdit);
     this._setLocalStorage();
+  }
+
+  _showAll(e) {
+    e.preventDefault();
+
+    const group = new L.featureGroup(this.#workoutMarkers);
+    this.#map.fitBounds(group.getBounds());
   }
 }
 

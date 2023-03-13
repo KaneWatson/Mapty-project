@@ -206,21 +206,6 @@ a:visited {
   border-left: 5px solid var(--color-brand--1);
 }
 
-.btn--delete {
-  color: var(--color-light--3);
-  font-weight: 600;
-  font-size: 1.5rem;
-  align-self: center;
-  padding: 0.5rem 0.5rem;
-  border-radius: 20px;
-  margin-bottom: -30px;
-  background-color: #de695a;
-}
-
-.btn--delete:hover {
-  background-color: #df4545e6;
-}
-
 .btn--hidden {
   display: none;
 }
@@ -308,5 +293,47 @@ a:visited {
 }
 
 .edit--form__btn {
+  display: none;
+}
+
+.btn--btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1rem;
+  width: 50%;
+  align-self: center;
+  margin-bottom: -35px;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.btn--delete {
+  color: var(--color-light--3);
+  font-weight: 600;
+  font-size: 1.3rem;
+
+  border-radius: 5px;
+
+  background-color: #d8402ca9;
+}
+
+.btn--delete:hover {
+  background-color: #df4545e6;
+}
+
+.btn--show {
+  background-color: #3b8022ca;
+  color: var(--color-light--3);
+  font-weight: 600;
+  font-size: 1.3rem;
+
+  border-radius: 5px;
+}
+
+.btn--show:hover {
+  background-color: #59d22dca;
+}
+
+.btn--btns--hidden {
   display: none;
 }
