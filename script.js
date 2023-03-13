@@ -169,6 +169,9 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
+
+    this.#workoutMarkers.push(marker);
+    console.log(this.#workoutMarkers);
   }
 
   _renderWorkoutItem(workout) {
@@ -333,16 +336,6 @@ class App {
     editInputCadence.parentElement.classList.toggle('edit--form__row--hidden');
   }
 
-  cancelEdit(e) {
-    if (!e.target.closest('.edit--form')) {
-      if (confirm('Unsaved changes will be lost. Proceed anyway?')) {
-        editForm.classList.add('hidden');
-        this.#currentWorkoutListItem.classList.remove('hidden');
-        document.removeEventListener('click', this.cancelEdit);
-      }
-    }
-  }
-
   _updateWorkout(e) {
     e.preventDefault();
     const markerCoords = [
@@ -360,7 +353,6 @@ class App {
     const distance = +editInputDistance.value;
     const duration = +editInputDuration.value;
     const err = 'Inputs have to be positive numbers';
-    let workout;
 
     // behaviour based on workout type
     if (type === 'running') {
